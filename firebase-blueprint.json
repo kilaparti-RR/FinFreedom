@@ -1,0 +1,73 @@
+{
+  "entities": {
+    "Transaction": {
+      "title": "Transaction",
+      "description": "A financial transaction record",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The UID of the user who owns this transaction" },
+        "date": { "type": "string", "format": "date-time", "description": "ISO date string of the transaction" },
+        "category": { 
+          "type": "string", 
+          "enum": ["Earnings", "FinancialGoals", "Essential", "Family", "Lifestyle", "Discretionary", "Miscellaneous"] 
+        },
+        "subCategory": { "type": "string" },
+        "details": { "type": "string" },
+        "amount": { "type": "number", "description": "Positive amount of the transaction" },
+        "paymentMode": { 
+          "type": "string", 
+          "enum": ["Bank", "Credit Card", "Debit Card", "Cash", "UPI"] 
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "date", "category", "subCategory", "amount"]
+    },
+    "BudgetPlanner": {
+      "title": "BudgetPlanner",
+      "description": "Monthly budget allocation plan",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "monthYear": { "type": "string", "description": "Format YYYY-MM" },
+        "estEarnings": { "type": "number" },
+        "allocations": {
+          "type": "object",
+          "properties": {
+            "FinancialGoals": { "type": "number" },
+            "Essential": { "type": "number" },
+            "Family": { "type": "number" },
+            "Lifestyle": { "type": "number" },
+            "Discretionary": { "type": "number" },
+            "Miscellaneous": { "type": "number" }
+          }
+        }
+      },
+      "required": ["userId", "monthYear", "estEarnings", "allocations"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User specific profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" }
+      },
+      "required": ["uid", "email"]
+    }
+  },
+  "firestore": {
+    "/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Collection of all user transactions"
+    },
+    "/budgets/{budgetId}": {
+      "schema": "BudgetPlanner",
+      "description": "Collection of monthly budget plans"
+    },
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile documents"
+    }
+  }
+}

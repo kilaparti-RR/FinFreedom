@@ -1,0 +1,83 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: transactions
+    // Fields: userId, date, category, subCategory, details, amount, paymentMode, createdAt
+    //
+    // Collection: budgets
+    // Fields: userId, monthYear, estEarnings, allocations (map)
+    //
+    // Collection: users
+    // Fields: uid, email, displayName
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
+    function requestMatchesUid() {
+      return isAuthenticated() && request.auth.uid == request.resource.data.userId;
+    }
+
+    function isValidTransaction(data) {
+      return data.userId is string &&
+             data.date is string &&
+             data.category in ['Earnings', 'FinancialGoals', 'Essential', 'Family', 'Lifestyle', 'Discretionary', 'Miscellaneous'] &&
+             data.subCategory is string &&
+             data.amount is number && data.amount >= 0 &&
+             data.paymentMode in ['Bank', 'Credit Card', 'Debit Card', 'Cash', 'UPI'];
+    }
+
+    function isValidBudget(data) {
+      return data.userId is string &&
+             data.monthYear is string &&
+             data.estEarnings is number &&
+             data.allocations is map;
+    }
+
+    function isValidUser(data) {
+      return data.uid is string &&
+             data.email is string;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /transactions/{transactionId} {
+      allow read: if isDocOwner();
+      allow create: if requestMatchesUid() && isValidTransaction(request.resource.data);
+      allow update: if isDocOwner() && requestMatchesUid() && isValidTransaction(request.resource.data);
+      allow delete: if isDocOwner();
+    }
+
+    match /budgets/{budgetId} {
+      allow read: if isDocOwner();
+      allow create: if requestMatchesUid() && isValidBudget(request.resource.data);
+      allow update: if isDocOwner() && requestMatchesUid() && isValidBudget(request.resource.data);
+      allow delete: if isDocOwner();
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data);
+    }
+  }
+}
